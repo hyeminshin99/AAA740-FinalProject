@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Linq;
 using UnityEngine.Windows.WebCam;
+using System.Collections.Generic;
 
 public class TestClick : MonoBehaviour
 {
@@ -21,7 +22,7 @@ public class TestClick : MonoBehaviour
     {
         shutterSound = GetComponent<AudioSource>() as AudioSource;
 
-        Debug.Log("File path " + Application.persistentDataPath);
+        //Debug.Log("File path " + Application.persistentDataPath);
 
         cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).First();
 
@@ -57,8 +58,10 @@ public class TestClick : MonoBehaviour
                 shutterSound.Play();
             }
 
-            photoCaptureObject.StartPhotoModeAsync(cameraParameters, delegate (PhotoCapture.PhotoCaptureResult result)
+            photoCaptureObject.StartPhotoModeAsync(cameraParameters, 
+                delegate (PhotoCapture.PhotoCaptureResult result)
             {
+                Debug.Log("start photo mode aync");
                 // Take a picture
                 photoCaptureObject.TakePhotoAsync(OnCapturedPhotoToMemory);
             });
@@ -101,49 +104,58 @@ public class TestClick : MonoBehaviour
 
     void OnCapturedPhotoToMemory(PhotoCapture.PhotoCaptureResult result, PhotoCaptureFrame photoCaptureFrame)
     {
+
         // Copy the raw image data into our target texture
         var targetTexture = new Texture2D(cameraResolution.width, cameraResolution.height);
 
+
         photoCaptureFrame.UploadImageDataToTexture(targetTexture);
-
-        OnPhotoModeStarted(result);
-
-        // Create a gameobject that we can apply our texture to
-
-        //GameObject newElement = Instantiate<GameObject>(PhotoPrefab);
-
-        //GameObject quad = newElement.transform.Find("Quad").gameObject;
-
-
-        //Renderer quadRenderer = quad.GetComponent<Renderer>() as Renderer;
-
-        //quadRenderer.material.mainTexture = targetTexture;
-
-
-        // new Material(Shader.Find("Unlit/Texture"));
-
-        // Set position and rotation 
-        // Bug in Hololens v2 and Unity 2019 about PhotoCaptureFrame not having the location data - March 2020
-        // 
-        // Matrix4x4 cameraToWorldMatrix;
-        // photoCaptureFrame.TryGetCameraToWorldMatrix(out cameraToWorldMatrix);
-        //  Vector3 position = cameraToWorldMatrix.MultiplyPoint(Vector3.zero);
-        //  Quaternion rotation = Quaternion.LookRotation(-cameraToWorldMatrix.GetColumn(2), cameraToWorldMatrix.GetColumn(1));
-        // Vector3 cameraForward = cameraToWorldMatrix * Vector3.forward;
 
 
         rawIamge.texture = targetTexture;
-        
-        
-        //Vector3 cameraForward = Camera.main.transform.forward;
-        //cameraForward.Normalize();
-        //newElement.transform.position = Camera.main.transform.position + (cameraForward * 0.6f);
-
-        //newElement.transform.rotation = Quaternion.LookRotation(cameraForward, Vector3.up);
-        //Vector3 scale = newElement.transform.localScale;
-        //scale.y = scale.y * ratio; // scale the entire photo on height
-        //newElement.transform.localScale = scale;
     }
+
+    void OnCapturedPhotoToMemory2(PhotoCapture.PhotoCaptureResult result, PhotoCaptureFrame photoCaptureFrame)
+    {
+        if (result.success)
+        {
+            Debug.Log("Success to capture");
+
+            List<byte> imageBufferList = new List<byte>();
+            // Copy the raw IMFMediaBuffer data into our empty byte list.
+            photoCaptureFrame.CopyRawImageDataIntoBuffer(imageBufferList);
+
+            if(TCPServerConnection.instance.PythonConnected == true)
+            {
+                TCPServerConnection.instance.
+                    SendData2PythonClientImageBuffer(imageBufferList);
+            }
+            
+            // In this example, we captured the image using the BGRA32 format.
+            // So our stride will be 4 since we have a byte for each rgba channel.
+            // The raw image data will also be flipped so we access our pixel data
+            // in the reverse order.
+
+            //int stride = 4;
+            //float denominator = 1.0f / 255.0f;
+
+            //List<Color> colorArray = new List<Color>();
+            //for (int i = imageBufferList.Count - 1; i >= 0; i -= stride)
+            //{
+            //    float a = (int)(imageBufferList[i - 0]) * denominator;
+            //    float r = (int)(imageBufferList[i - 1]) * denominator;
+            //    float g = (int)(imageBufferList[i - 2]) * denominator;
+            //    float b = (int)(imageBufferList[i - 3]) * denominator;
+
+            //    colorArray.Add(new Color(r, g, b, a));
+            //}
+
+            //// Now we could do something with the array such as texture.SetPixels() or run image processing on the list
+        }
+
+        photoCaptureObject.StopPhotoModeAsync(OnStoppedPhotoMode);
+    }
+
 
     void OnStoppedPhotoMode(PhotoCapture.PhotoCaptureResult result)
     {
@@ -154,7 +166,7 @@ public class TestClick : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(KeyCode.P))
         {
             ClickTest();
         }
