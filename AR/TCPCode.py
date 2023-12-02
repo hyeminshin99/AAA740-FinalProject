@@ -1,6 +1,8 @@
 import sys
 from threading import Thread
-#from SpeakerDetection import *
+import cv2
+import numpy as np
+import base64
 
 import json
 
@@ -8,57 +10,13 @@ import socket
 import time
 from turtle import st
 
-################# Face ###############
 
-import cv2
 from time import sleep
 from array import array
 
-preVirtualHuman = 0
-VirtualHuman = 0 #0: idel, 1: see participant left, 2: see participant right
-y_pos = 0
 
-Left_P = 0 # 안보면 0, 보면 1
-Right_P = 0 #안보면 0, 보면 1
-
-
-######## Facial Landmark  ########
-ALL = list(range(0, 68))
-RIGHT_EYEBROW = list(range(17, 22))
-LEFT_EYEBROW = list(range(22, 27))
-RIGHT_EYE = list(range(36, 42))
-LEFT_EYE = list(range(42, 48))
-NOSE = list(range(27, 36))
-MOUTH_OUTLINE = list(range(48, 61))
-MOUTH_INNER = list(range(61, 68))
-JAWLINE = list(range(0, 17))
-
-CamerWidth = 960 # 얼굴 인식 할 떄 사용하는 카메라 사이즈
-CameraHeight = 540
-
-MouthThreshold = 0.26 # Mouth open 민감도 조절 
-
-##### Sound setting######
-CHANNELS = 1  #수정? -원래 2
-RATE=44100
-CHUNK=1024
-RECORD_SECONDS=15
-
-DBThreshold = 900 #2200 #수정 가능함 - 마이크 소리 민감도에 따라서 조절 가능함
-
-Last_SoundDetect = time.time()
-
-####Detection 관련 함수
 
 print("코드실행시작")
-
-cv2.ocl.setUseOpenCL(False)
-# cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 540)
-#  capture.FrameWidth = 5000;
-#                     capture.FrameHeight = 5000;
 
 
 ########################Face####################
@@ -82,6 +40,7 @@ else:
 # IP = "192.168.1.74" #컴퓨터에 따라 수정
 # IP = "192.0.0.2"
 IP = "192.168.0.185"
+# IP = "192.168.0.117"
 PORT = 710
 
 
@@ -136,17 +95,66 @@ class App(object):
         print("유니티로부터 데이터 들어오는 것 대기하는 스레드 작동! CTRL + C 종료 ")
         
         while True:
-            try:
-                    # python -> unity test   
-                    data = sock.recv(1024) 
-                    if not data:
-                        break
-                    val = int.from_bytes(data, "little")
+            
+            try:    
+                
+                checkPoint = sock.recv(300).decode('utf-8')
+                json_data = json.loads(checkPoint)
 
-                    if val == 400:
-                        print("400 을 전달 받았음") 
-                    elif val == 12:
-                        print("12 을 전달 받았음")
+                if json_data['commandIndex'] == 2:
+
+                    print(" 예상되는 데이터 길이 : " + json_data['message'] )
+
+                    while True:
+                        # full_data = b''  # 바이트 형식으로 데이터를 받습니다.
+
+                        expected_length = int(json_data['message'])
+
+                        print(f"예상되는 데이터 길이: {expected_length}")
+
+                        # 두 번째 메시지: 실제 데이터 수신
+                        full_data = b''
+                        while len(full_data) < expected_length:
+                            print("기다리는 중")
+                            # 데이터를 수신하여 full_data에 추가합니다.
+
+                            part_data = sock.recv(1024)
+                            if not part_data:
+                                break
+                            full_data += part_data
+                            print(f"수신 중... 현재 길이: {len(full_data)}")
+
+
+                        # 데이터를 문자열로 변환
+                        image_data = json.loads(full_data.decode('utf-8'))
+                        print(" ar you here? ")
+                        res = image_data['res']
+                        message = image_data['message']
+                        buffer = base64.b64decode(image_data['data'])
+
+                        # commandIndex = json_data['commandIndex']
+
+                        if res == 147:
+                            print("그림을 받음")
+
+                            print(buffer)
+
+                            print(message)
+
+                            image_np = np.frombuffer(buffer, dtype=np.uint8)
+                            image = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
+                            
+                            if image is None:
+                                print("이미지 디코딩 실패")
+                            else:
+                                cv2.imshow('Received Image', image)
+                                cv2.waitKey(0)
+                                cv2.destroyAllWindows()
+                        else:
+                            print("모름")
+
+            except json.JSONDecodeError as e:
+                print(f"JSON 파싱 오류: {e}")
             except:
                     pass
 
@@ -164,6 +172,7 @@ class App(object):
             while thread.is_alive():
                 thread.join(1)  # time out not to block KeyboardInterrupt
 
+
         except KeyboardInterrupt:
             # print "Ctrl+C pressed..."
             ThreadMessage = {
@@ -171,8 +180,11 @@ class App(object):
                 "message": "Python server terminated",
                 "commandIndex" : 199 # 다른 값?
                 }
+            
             sock.sendto(json.dumps(ThreadMessage, ensure_ascii=False).encode('utf8'), (IP, PORT))
+
             print("Ctrl+C pressed...")
+
             sys.exit(1)    
             
 if __name__ == '__main__':

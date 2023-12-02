@@ -24,6 +24,8 @@ public class TransferData
 
     // 전달하고자 하는 메시지
     public string message { get; set; }
+
+    public string data { get; set; }
 }
 
 public enum Command
@@ -99,6 +101,7 @@ public class TCPServerConnection : MonoBehaviour
 
     public Text status_text;
 
+    public bool PythonConnected = false;
 
     public Image AndroidConnectStatusImage;
 
@@ -107,7 +110,7 @@ public class TCPServerConnection : MonoBehaviour
 
     Dictionary<EndPoint, Socket> connectedClients = new Dictionary<EndPoint, Socket>();
 
-    public static int RECEIVED_DATA_FULL_SIZE = 1000;
+    public static int RECEIVED_DATA_FULL_SIZE = 100000;
     private byte[] receviedDataBytes = new byte[RECEIVED_DATA_FULL_SIZE];
     /// <summary>
     /// 클라이언트로부터 받아온 명령을 순차적으로 처리하기 위한 Queue 자료 구조 
@@ -154,8 +157,6 @@ public class TCPServerConnection : MonoBehaviour
         m_fnAcceptHandler = new AsyncCallback(handleClientConnectionRequest);
     }
 
-    [ReadOnly]
-    public string sHeartRate = "-1";
 
     void Update()
     {
@@ -167,19 +168,24 @@ public class TCPServerConnection : MonoBehaviour
             switch (q.commandIndex)
             {
                 case (int)Command.SERVER_START:
-                    status_text.text += "\nServer Start " + System.DateTime.Now.ToString("hh:mm:ss tt") + "\nCurrent Server IP: " + CurIPAddress;
+                    status_text.text += 
+                        "\nServer Start " + System.DateTime.Now.ToString("hh:mm:ss tt") 
+                        + "\nCurrent Server IP: " + CurIPAddress;
                     break;
                 case (int)Command.SERVER_RESET:
-                    status_text.text += "Server Reset" + System.DateTime.Now.ToString("hh:mm:ss tt");
+                    status_text.text += 
+                        "Server Reset" + System.DateTime.Now.ToString("hh:mm:ss tt");
                     break;
                 case (int)Command.TEST_LOG:
-                    status_text.text += "\nLog Test\nLog Test\nLog Test\nLog Test\nLog Test";
+                    status_text.text += 
+                        "\nLog Test\nLog Test\nLog Test\nLog Test\nLog Test";
                     break;
 
                 case (int)Command.Connect_Success:
 
                     status_text.text += 
-                        "\n<color=#00ff00>====================\nServer Connected - " + System.DateTime.Now.ToString("hh:mm:ss tt")
+                        "\n<color=#00ff00>====================\nServer Connected - " 
+                        + System.DateTime.Now.ToString("hh:mm:ss tt")
                         + " / Android Client\n====================</color>";
 
                     ChangeAndroidAppConnectionStatus(0);
@@ -187,7 +193,8 @@ public class TCPServerConnection : MonoBehaviour
                     break;
 
                 case (int)Command.PythonClientDisConnected:
-                    status_text.text += "\n<color=#ff0000>ERROR!! : Server Disconnected Client</color>";
+                    status_text.text 
+                        += "\n<color=#ff0000>ERROR!! : Server Disconnected Client</color>";
                     
                     PythonConnected = false;
 
@@ -198,13 +205,6 @@ public class TCPServerConnection : MonoBehaviour
                     status_text.text += "\n<color=#ff0000>ERROR!! : maybe server disconnected to client</color>";
                     ChangeAndroidAppConnectionStatus(1);
                     break;
-                case (int)Command.HeartRateBPM:
-                    //Debug.Log(q.message);
-                    //status_text.text += "<color=#ff0000> Heart rate" + q.message + "</color>\n";
-                    //sHeartRate = q.message;
-                    //HeartRateText.text = sHeartRate;
-                    break;
-
             }
         }
     }
@@ -235,7 +235,7 @@ public class TCPServerConnection : MonoBehaviour
         m_ServerSocket.Bind(new IPEndPoint(IPAddress.Any, PORT));
 
         // 연결 요청을 받기 시작하며, parameter는 얼마나 많은 클라이언트를 수용할 것인지를 지정한다. 
-        m_ServerSocket.Listen(5);
+        m_ServerSocket.Listen(100);
 
         // BeginAccept 메서드를 이용해 들어오는 연결 요청을 비동기적으로 처리합니다.
         // 연결 요청을 처리하는 함수는 handleClientConnectionRequest 입니다.
@@ -287,7 +287,7 @@ public class TCPServerConnection : MonoBehaviour
         sockClient.BeginReceive(ao.Buffer, 0, ao.Buffer.Length, SocketFlags.None, m_fnReceiveHandler, ao);
     }
 
-    public bool PythonConnected = false;
+  
 
     /// <summary>
     /// 클라이언트로부터 값을 받는다. 
@@ -373,9 +373,6 @@ public class TCPServerConnection : MonoBehaviour
         AndroidConnectStatusImage.color = i == 0 ? Color.green : Color.red;
     }
 
-
-
-
     public void SendData2Client(int res, string message, Command name)
     {
         TransferData tData = new TransferData();
@@ -386,7 +383,9 @@ public class TCPServerConnection : MonoBehaviour
         string jsonJoinChatRoomInfo = JsonConvert.SerializeObject(tData);
 
         AsyncObject ao = new AsyncObject(1000);
+
         ao.Buffer = Encoding.UTF8.GetBytes(jsonJoinChatRoomInfo);
+
         // 사용된 소켓을 저장
         ao.WorkingSocket = m_ServerSocket;
 
@@ -408,104 +407,86 @@ public class TCPServerConnection : MonoBehaviour
 
     public void SendData2PythonClientImageBuffer(List<byte> buffer)
     {
-        AsyncObject ao = new AsyncObject(1000);
-
-        Debug.Log("Sending Data");
-
-        // 문자열을 바이트 배열으로 변환
-        //ao.Buffer = Encoding.Unicode.GetBytes(pixels);
-        ao.Buffer = buffer.ToArray();
-
-        // 사용된 소켓을 저장
-        ao.WorkingSocket = m_ServerSocket;
-
-        // 전송 시작!
-        try
-        {
-            m_PythonClient.BeginSend(ao.Buffer, 0, ao.Buffer.Length, SocketFlags.None, m_fnSendHandler, ao);
-        }
-        catch (Exception ex)
-        {
-            TransferData tData = new TransferData();
-            //Debug.Log("전송 중 오류 발생 :" + ex.ToString());
-            Debug.Log("전송 중 오류 발생 :" + ex.ToString());
-            tData.res = 400;
-            tData.message = "전송 중 오류 발생 :" + ex.ToString();
-            tData.commandIndex = (int)Command.Error_SendToClient;
-            status.Enqueue(tData);
-        }
-
-    }
-
-    /// <summary>
-    /// python 클라이언트로 데이터를 보내는 함수. 
-    /// </summary>
-    public void SendData2PythonClient(int index)
-    {
-        AsyncObject ao = new AsyncObject(10);
-
-        // 문자열을 바이트 배열으로 변환
-        //ao.Buffer = Encoding.Unicode.GetBytes(pixels);
-        ao.Buffer = BitConverter.GetBytes(index);
-
-        // 사용된 소켓을 저장
-        ao.WorkingSocket = m_ServerSocket;
-
-        // 전송 시작!
-        try
-        {
-            m_PythonClient.BeginSend(ao.Buffer, 0, ao.Buffer.Length, SocketFlags.None, m_fnSendHandler, ao);
-        }
-        catch (Exception ex)
-        {
-            TransferData tData = new TransferData();
-            //Debug.Log("전송 중 오류 발생 :" + ex.ToString());
-            Debug.Log("전송 중 오류 발생 :" + ex.ToString());
-            tData.res = 400;
-            tData.message = "전송 중 오류 발생 :" + ex.ToString();
-            tData.commandIndex = (int)Command.Error_SendToClient;
-            status.Enqueue(tData);
-        }
-    }
-
-    /// <summary>
-    /// Button UI에 의해서 클릭으로 인한 호출이 발생하였을 때.
-    /// </summary>
-    /// <param name="name"></param>
-    public void SendData2ClientByButtonClick(string message, Command name)
-    {
-        // 문자열을 바이트 배열으로 변환
-        // 만약 숫자만을 보낸다면 이걸 쓰면 되지만, 그러면 유지보수가 어려움. 
-        //ao.Buffer = BitConverter.GetBytes(index); 
-
         TransferData tData = new TransferData();
-        tData.res = 200;
-        tData.message = message;
-        tData.commandIndex = (int)name;
+        tData.res = 147;
 
-        string jsonString = JsonConvert.SerializeObject(tData);
+        tData.commandIndex = 1;
 
-        Debug.Log(jsonString);
-        AsyncObject ao = new AsyncObject(1000);
+        tData.data = Convert.ToBase64String(buffer.ToArray());  // 바이너리 데이터를 Base64 문자열로 변환
+        
 
-        ao.Buffer = Encoding.UTF8.GetBytes(jsonString);
+        string jsonJoinChatRoomInfo = JsonConvert.SerializeObject(tData);
+
+        AsyncObject ao = new AsyncObject(500000);
+
+        ao.Buffer = Encoding.UTF8.GetBytes(jsonJoinChatRoomInfo);
+
         // 사용된 소켓을 저장
         ao.WorkingSocket = m_ServerSocket;
 
-        // 전송 시작!
+        Debug.Log("이만큼 보냄" + ao.Buffer.Length);
+
+        FlagFirst(ao.Buffer.Length);
+
+        StartCoroutine(Wait(ao));
+    }
+
+    IEnumerator Wait(AsyncObject ao)
+    {
+        yield return new WaitForSeconds(3f);
         try
         {
-            m_ConnectedClient.BeginSend(ao.Buffer, 0, ao.Buffer.Length, SocketFlags.None, m_fnSendHandler, ao);
+            m_ConnectedClient.BeginSend(ao.Buffer, 0,
+                ao.Buffer.Length,
+                SocketFlags.None,
+                m_fnSendHandler, ao);
         }
         catch (Exception ex)
         {
             Debug.Log("전송 중 오류 발생 :" + ex.ToString());
-            tData.res = 400;
-            tData.message = "전송 중 오류 발생 :" + ex.ToString();
-            tData.commandIndex = (int)Command.Error_SendToClient;
-            status.Enqueue(tData);
         }
     }
+
+    public void FlagFirst(int length)
+    {
+        TransferData tData = new TransferData();
+        tData.res = 145;
+
+        tData.commandIndex = 2;
+
+        tData.message = length.ToString();
+        //tData.data = Convert.ToBase64String(buffer.ToArray());  // 바이너리 데이터를 Base64 문자열로 변환
+
+
+        string jsonJoinChatRoomInfo = JsonConvert.SerializeObject(tData);
+
+        AsyncObject ao = new AsyncObject(500000);
+
+        ao.Buffer = Encoding.UTF8.GetBytes(jsonJoinChatRoomInfo);
+
+        // 사용된 소켓을 저장
+        ao.WorkingSocket = m_ServerSocket;
+
+        Debug.Log("이만큼 보냄" + ao.Buffer.Length);
+
+        tData.message = ao.Buffer.Length.ToString();
+
+        try
+        {
+            m_ConnectedClient.BeginSend(ao.Buffer, 0,
+                ao.Buffer.Length,
+                SocketFlags.None,
+                m_fnSendHandler, ao);
+        }
+        catch (Exception ex)
+        {
+
+            Debug.Log("전송 중 오류 발생 :" + ex.ToString());
+        }
+
+    }
+
+
 
     /// <summary>
     /// 전달한 데이터에 대한 정보를 가져오는 역할을 함. 
@@ -533,12 +514,12 @@ public class TCPServerConnection : MonoBehaviour
 
         // 가차없이 서버 소켓을 닫습니다.
         m_ServerSocket.Close();
-        if (m_ConnectedClient != null)
-        {
-            m_ConnectedClient.Close();
-        }
-    }
 
+        //if (m_ConnectedClient != null)
+        //{
+        //    m_ConnectedClient.Close();
+        //}
+    }
 
     public static string LocalIPAddress()
     {
@@ -565,6 +546,44 @@ public class TCPServerConnection : MonoBehaviour
     {
         status_text.text = "";
     }
+
+    public void PauseServer()
+    {
+        Debug.Log("중단!!");
+
+        //// 모든 클라이언트 연결을 중단합니다.
+        //foreach (var client in connectedClients.Values)
+        //{
+        //    client.Shutdown(SocketShutdown.Both);
+        //    client.Close();
+        //}
+        //connectedClients.Clear();
+
+        // 서버 소켓을 일시 중단합니다.
+        m_ServerSocket.Close();
+
+        //if (m_ServerSocket != null && m_ServerSocket.Connected)
+        //{
+         
+
+            
+        //}
+    }
+
+    public void ResumeServer()
+    {
+        if (m_ServerSocket == null || !m_ServerSocket.Connected)
+        {
+            // 서버 소켓을 다시 시작합니다.
+            m_ServerSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            m_ServerSocket.Bind(new IPEndPoint(IPAddress.Any, MYPROT_NUMBER));
+            m_ServerSocket.Listen(100000);
+            m_ServerSocket.BeginAccept(m_fnAcceptHandler, null);
+
+            Debug.Log("재개 완료!!");
+        }
+    }
+
 
     private void OnApplicationQuit()
     {
