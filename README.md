@@ -26,8 +26,17 @@ Meta-Transfer Learning for Super-resolution in Augmented Reality Domain
 
 #### [CMDSR (2022)] Conditional Hyper-Network for Blind Super-Resolution with Multiple Degradations. <a href="https://ieeexplore.ieee.org/abstract/document/9785471">Link</a>
 
+## Input Datas
+
+**Pictures taken Hololens2**
+
+<p align="center"><img src="hololens2.png" width="900"></p>
+
 ## Experimental Results
 
 **Results on various models**
 
 <p align="center"><img src="results.png" width="900"></p>
+
+
+
