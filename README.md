@@ -30,7 +30,7 @@ Meta-Transfer Learning for Super-resolution in Augmented Reality Domain
 
 **Pictures taken Hololens2**
 
-<p align="center"><img src="hololens2.png" width="500"></p>
+<p align="center"><img src="hololens2.png" width="300"></p>
 
 ## Experimental Results
 
