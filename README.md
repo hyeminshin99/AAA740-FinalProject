@@ -40,6 +40,6 @@ Meta-Transfer Learning for Super-resolution in Augmented Reality Domain
 
 **Results with User Study**
 
-<p align="center"><img src="result_figure.png" width="600"></p>
+<p align="center"><img src="result_figure.png" width="550"></p>
 
 
