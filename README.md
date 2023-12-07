@@ -29,7 +29,7 @@ Among them, some models succeeded in producing SR results. Thus, these models ar
 
 Not only that, but we also successfully fine-tuned the MZSR model to enhance its performance on our AR Image dataset. 
 
-As a result, we designate it as our own within the context of this project.
+As a result, we designate it as our own within this project.
 
 
 
