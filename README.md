@@ -39,7 +39,7 @@ As a result, we designate it as our own within the context of this project.
 
 #### [NatSR (2019)] Natural and Realistic Single Image Super-Resolution with Explicit Natural Manifold Discrimination <a href="https://openaccess.thecvf.com/content_CVPR_2019/papers/Soh_Natural_and_Realistic_Single_Image_Super-Resolution_With_Explicit_Natural_Manifold_CVPR_2019_paper.pdf">Link</a>
 
-#### [MZSR (2020)] Meta-Transfer Learning for Zero-Shot Super-Resolution <a href="Meta-Transfer Learning for Zero-Shot Super-Resolution <a href="https://openaccess.thecvf.com/content_CVPR_2020/papers/Soh_Meta-Transfer_Learning_for_Zero-Shot_Super-Resolution_CVPR_2020_paper.pdf">Link</a>
+#### [MZSR (2020)] Meta-Transfer Learning for Zero-Shot Super-Resolution <a href="https://openaccess.thecvf.com/content_CVPR_2020/papers/Soh_Meta-Transfer_Learning_for_Zero-Shot_Super-Resolution_CVPR_2020_paper.pdf">Link</a>
 
 #### [Real-ESRGAN (2021)] Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data <a href="https://arxiv.org/abs/2107.10833">Link</a>
 
