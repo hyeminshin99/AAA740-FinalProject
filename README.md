@@ -2,6 +2,8 @@
 23-2 Korea Univ. SPECIAL TOPICS IN ARTIFICIAL INTELLIGENCE Final Project
 Meta-Transfer Learning for Super-resolution in Augmented Reality Domain
 
+<p align="center"><img src="figure_1_ar.jpg" width="900"></p>
+
 * 🌿 Overleaf link for Final Report
   https://www.overleaf.com/read/xztchtmqxhmk#8959bd
   
