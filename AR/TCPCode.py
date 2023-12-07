@@ -21,26 +21,10 @@ print("코드실행시작")
 
 ########################Face####################
 
-'''
-print("Pleas Enter your IP: 빈:0, 한섭:1, 기타:2")
 
-mode = int(input("컴퓨터 번호:"))
 
-if mode == 0:
-    IP = "161.122.33.97"
-elif mode == 1:    
-    IP =  "161.122.33.68" #"172.30.144.1"
-else:
-    IP = input("Please enter ip: xxx.xxx.xx.x")
-
-# "192.168.137.1" #한섭 주소, "192.168.1.157"
-# "161.122.33.97" #빈 주소
-'''
-
-# IP = "192.168.1.74" #컴퓨터에 따라 수정
-# IP = "192.0.0.2"
 IP = "192.168.0.185"
-# IP = "192.168.0.117"
+
 PORT = 710
 
 
@@ -59,13 +43,13 @@ ConnectedResult = {
     'commandIndex' : 200
 }
 
-# sock.sendto(bytes([198]), (IP, PORT))  # 연결되었을 때 보내는 값.
 
 sock.sendto(json.dumps(ConnectedResult, ensure_ascii=False).encode('utf8'), (IP, PORT))  # 연결되었을 때 보내는 값.
 
 class App(object):
     def __init__(self):
         pass
+    
     
     def loop(self):
     
@@ -127,7 +111,7 @@ class App(object):
 
                         # 데이터를 문자열로 변환
                         image_data = json.loads(full_data.decode('utf-8'))
-                        print(" ar you here? ")
+                        
                         res = image_data['res']
                         message = image_data['message']
                         buffer = base64.b64decode(image_data['data'])
@@ -147,9 +131,11 @@ class App(object):
                             if image is None:
                                 print("이미지 디코딩 실패")
                             else:
+                                # Sending image to server for SR task.. 
+
                                 cv2.imshow('Received Image', image)
-                                cv2.waitKey(0)
-                                cv2.destroyAllWindows()
+                                # cv2.waitKey(0)
+                                # cv2.destroyAllWindows()
                         else:
                             print("모름")
 
@@ -158,17 +144,14 @@ class App(object):
             except:
                     pass
 
+
+
     def TreadMain(self):
         try:
             thread = Thread(target=self.rcvMsg, args=(sock,))
             thread.daemon = True  # let the parent kill the child thread at exit
             thread.start()
             
-            # thread2 = Thread(target=self.loop, args=())
-            # thread2.daemon = True  # let the parent kill the child thread at exit
-            # thread2.start()
-
-
             while thread.is_alive():
                 thread.join(1)  # time out not to block KeyboardInterrupt
 
@@ -178,7 +161,7 @@ class App(object):
             ThreadMessage = {
                 "res": 0,
                 "message": "Python server terminated",
-                "commandIndex" : 199 # 다른 값?
+                "commandIndex" : 199 
                 }
             
             sock.sendto(json.dumps(ThreadMessage, ensure_ascii=False).encode('utf8'), (IP, PORT))
