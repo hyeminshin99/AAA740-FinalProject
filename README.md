@@ -19,7 +19,7 @@ Meta-Transfer Learning for Super-resolution in Augmented Reality Domain
 
 We conducted at a level of fine-tuning existing models. 
 
-During this project, we aimed to gain a range of experience with as many models as possible and implement them in operational contexts.
+During this project, we aimed to gain a range of experience with as many models as possible and modify them in operational contexts.
 
 Here are some of the models we came across during our project experience. 
 
